@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Database, Bitcoin, Download, Plus, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import InvitationGate from "@/components/InvitationGate";
 
 interface Product {
   id: string;
@@ -20,6 +22,7 @@ interface Product {
 }
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState<Product[]>([
     {
       id: "1",
@@ -28,7 +31,7 @@ const Index = () => {
       description: "Complete customer behavior analytics database with 10M+ records",
       country: "United States",
       size: "2.5 GB",
-      price: 0.025
+      price: 2500
     },
     {
       id: "2", 
@@ -37,7 +40,7 @@ const Index = () => {
       description: "Comprehensive e-commerce transaction database with purchase patterns",
       country: "Germany",
       size: "1.8 GB",
-      price: 0.018
+      price: 1800
     },
     {
       id: "3",
@@ -46,7 +49,7 @@ const Index = () => {
       description: "Anonymized medical research database for healthcare analytics",
       country: "Canada",
       size: "4.2 GB",
-      price: 0.045
+      price: 4500
     }
   ]);
 
@@ -56,6 +59,10 @@ const Index = () => {
   const { toast } = useToast();
 
   const btcWallet = "1MuCbBteMFrQpcXBNCftPRAwJ954LqZWjy";
+
+  if (!isAuthenticated) {
+    return <InvitationGate onValidCode={() => setIsAuthenticated(true)} />;
+  }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,15 +84,22 @@ const Index = () => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
         
-        const newProducts = jsonData.map((row, index) => ({
-          id: String(products.length + index + 1),
-          name: row.name || "Unnamed Product",
-          domain: row.domain || "example.dnvdb.com",
-          description: row.description || "No description available",
-          country: row.country || "Unknown",
-          size: row.size || "N/A",
-          price: parseFloat(row.price) || 0
-        }));
+        console.log("Parsed data from file:", jsonData);
+        
+        const newProducts = jsonData.map((row, index) => {
+          console.log("Processing row:", row);
+          return {
+            id: String(products.length + index + 1),
+            name: row.Name || row.name || "Unnamed Product",
+            domain: row.Domain || row.domain || "example.dnvdb.com",
+            description: row.Description || row.description || "No description available",
+            country: row.Country || row.country || "Unknown",
+            size: row.Size || row.size || "N/A",
+            price: parseFloat(row.Price || row.price) || 0
+          };
+        });
+        
+        console.log("New products to add:", newProducts);
         
         setProducts(prev => [...prev, ...newProducts]);
         toast({
@@ -97,9 +111,10 @@ const Index = () => {
           fileInputRef.current.value = '';
         }
       } catch (error) {
+        console.error("File processing error:", error);
         toast({
           title: "Error",
-          description: "Failed to process file. Please check the format.",
+          description: "Failed to process file. Please check the format and column names.",
           variant: "destructive"
         });
       }
@@ -115,12 +130,12 @@ const Index = () => {
   const downloadSampleFile = () => {
     const sampleData = [
       {
-        name: "Sample Database",
-        domain: "sample.dnvdb.com",
-        description: "This is a sample database description",
-        country: "United States",
-        size: "1.2 GB",
-        price: 0.01
+        Name: "Sample Database",
+        Domain: "sample.dnvdb.com",
+        Description: "This is a sample database description",
+        Country: "United States",
+        Size: "1.2 GB",
+        Price: 1000
       }
     ];
     
@@ -137,10 +152,9 @@ const Index = () => {
 
   const completePurchase = () => {
     if (selectedProduct) {
-      
       toast({
         title: "Purchase Initiated!",
-        description: `Please send ${selectedProduct.price} BTC to complete your purchase of ${selectedProduct.name}`,
+        description: `Please send payment to complete your purchase of ${selectedProduct.name}`,
       });
       
       setShowPayment(false);
@@ -181,7 +195,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Admin Panel */}
-        <Card className="border-dnv-orange/30 bg-card/80 backdrop-blur-sm">
+        <Card className="border-dnv-dark-blue/30 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-foreground">
               <Upload className="h-5 w-5 text-dnv-orange" />
@@ -232,7 +246,7 @@ const Index = () => {
                     <TableHead className="text-foreground">Description</TableHead>
                     <TableHead className="text-foreground">Country</TableHead>
                     <TableHead className="text-foreground">Size</TableHead>
-                    <TableHead className="text-foreground">Price (BTC)</TableHead>
+                    <TableHead className="text-foreground">Price</TableHead>
                     <TableHead className="text-foreground">BUY NOW BUTTON</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -247,7 +261,7 @@ const Index = () => {
                       <TableCell className="text-foreground">{product.country}</TableCell>
                       <TableCell className="text-foreground">{product.size}</TableCell>
                       <TableCell className="font-mono text-dnv-orange font-semibold">
-                        ₿ {product.price}
+                        ${product.price.toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
@@ -290,8 +304,8 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-dnv-orange">₿ {selectedProduct.price}</p>
-                  <p className="text-muted-foreground">Send exact amount to:</p>
+                  <p className="text-2xl font-bold text-dnv-orange">${selectedProduct.price.toLocaleString()}</p>
+                  <p className="text-muted-foreground">Send Bitcoin equivalent to:</p>
                 </div>
                 
                 <div className="bg-muted p-4 rounded-lg">
@@ -300,7 +314,7 @@ const Index = () => {
                 
                 <div className="bg-dnv-yellow/10 border border-dnv-yellow/30 p-3 rounded-lg">
                   <p className="text-sm text-foreground">
-                    <strong>Important:</strong> Send the exact amount to the address above. 
+                    <strong>Important:</strong> Send the Bitcoin equivalent of ${selectedProduct.price.toLocaleString()} to the address above. 
                     Your database access will be provided after 1 confirmation.
                   </p>
                 </div>
