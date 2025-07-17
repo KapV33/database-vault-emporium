@@ -12,11 +12,11 @@ import * as XLSX from "xlsx";
 interface Product {
   id: string;
   name: string;
+  domain: string;
   description: string;
+  country: string;
+  size: string;
   price: number;
-  category: string;
-  stock: number;
-  features: string;
 }
 
 const Index = () => {
@@ -24,29 +24,29 @@ const Index = () => {
     {
       id: "1",
       name: "Customer Analytics DB",
+      domain: "analytics.dnvdb.com",
       description: "Complete customer behavior analytics database with 10M+ records",
-      price: 0.025,
-      category: "Analytics",
-      stock: 15,
-      features: "Real-time insights, Machine learning ready, API access"
+      country: "United States",
+      size: "2.5 GB",
+      price: 0.025
     },
     {
       id: "2", 
       name: "E-commerce Transaction DB",
+      domain: "ecommerce.dnvdb.com",
       description: "Comprehensive e-commerce transaction database with purchase patterns",
-      price: 0.018,
-      category: "E-commerce",
-      stock: 8,
-      features: "Historical data, Fraud detection, Payment analytics"
+      country: "Germany",
+      size: "1.8 GB",
+      price: 0.018
     },
     {
       id: "3",
       name: "Medical Research DB",
+      domain: "medical.dnvdb.com",
       description: "Anonymized medical research database for healthcare analytics",
-      price: 0.045,
-      category: "Healthcare",
-      stock: 3,
-      features: "HIPAA compliant, Research grade, Statistical models"
+      country: "Canada",
+      size: "4.2 GB",
+      price: 0.045
     }
   ]);
 
@@ -80,11 +80,11 @@ const Index = () => {
         const newProducts = jsonData.map((row, index) => ({
           id: String(products.length + index + 1),
           name: row.name || "Unnamed Product",
+          domain: row.domain || "example.dnvdb.com",
           description: row.description || "No description available",
-          price: parseFloat(row.price) || 0,
-          category: row.category || "Uncategorized",
-          stock: parseInt(row.stock) || 0,
-          features: row.features || "No features listed"
+          country: row.country || "Unknown",
+          size: row.size || "N/A",
+          price: parseFloat(row.price) || 0
         }));
         
         setProducts(prev => [...prev, ...newProducts]);
@@ -116,11 +116,11 @@ const Index = () => {
     const sampleData = [
       {
         name: "Sample Database",
+        domain: "sample.dnvdb.com",
         description: "This is a sample database description",
-        price: 0.01,
-        category: "Sample",
-        stock: 5,
-        features: "Feature 1, Feature 2, Feature 3"
+        country: "United States",
+        size: "1.2 GB",
+        price: 0.01
       }
     ];
     
@@ -137,13 +137,6 @@ const Index = () => {
 
   const completePurchase = () => {
     if (selectedProduct) {
-      setProducts(prev => 
-        prev.map(p => 
-          p.id === selectedProduct.id 
-            ? { ...p, stock: Math.max(0, p.stock - 1) }
-            : p
-        )
-      );
       
       toast({
         title: "Purchase Initiated!",
@@ -164,7 +157,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dnv-charcoal via-dnv-dark-blue to-dnv-charcoal">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
@@ -235,50 +228,36 @@ const Index = () => {
                 <TableHeader>
                   <TableRow className="border-border">
                     <TableHead className="text-foreground">Name</TableHead>
+                    <TableHead className="text-foreground">Domain</TableHead>
                     <TableHead className="text-foreground">Description</TableHead>
-                    <TableHead className="text-foreground">Category</TableHead>
-                    <TableHead className="text-foreground">Features</TableHead>
+                    <TableHead className="text-foreground">Country</TableHead>
+                    <TableHead className="text-foreground">Size</TableHead>
                     <TableHead className="text-foreground">Price (BTC)</TableHead>
-                    <TableHead className="text-foreground">Stock</TableHead>
-                    <TableHead className="text-foreground">Actions</TableHead>
+                    <TableHead className="text-foreground">BUY NOW BUTTON</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {products.map((product) => (
                     <TableRow key={product.id} className="border-border">
                       <TableCell className="font-medium text-foreground">{product.name}</TableCell>
+                      <TableCell className="font-mono text-dnv-dark-blue">{product.domain}</TableCell>
                       <TableCell className="text-muted-foreground max-w-xs">
                         {product.description}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-dnv-dark-blue/30 text-foreground border-dnv-dark-blue">
-                          {product.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm max-w-xs">
-                        {product.features}
-                      </TableCell>
+                      <TableCell className="text-foreground">{product.country}</TableCell>
+                      <TableCell className="text-foreground">{product.size}</TableCell>
                       <TableCell className="font-mono text-dnv-orange font-semibold">
                         ₿ {product.price}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={product.stock > 0 ? "default" : "destructive"}
-                          className={product.stock > 0 ? "bg-dnv-yellow/20 text-dnv-yellow border-dnv-yellow/30" : ""}
-                        >
-                          {product.stock} units
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button
                             size="sm"
                             onClick={() => handlePurchase(product)}
-                            disabled={product.stock === 0}
                             className="bg-dnv-orange hover:bg-dnv-orange/80 text-white"
                           >
                             <Plus className="h-4 w-4 mr-1" />
-                            Buy
+                            Buy Now
                           </Button>
                           <Button
                             size="sm"
