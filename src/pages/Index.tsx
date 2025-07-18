@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,58 +7,114 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Database, Bitcoin, Download, Plus, Trash2 } from "lucide-react";
+import { Upload, Database, Bitcoin, Download, Plus, Trash2, Search, ArrowUpDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import InvitationGate from "@/components/InvitationGate";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
-  name: string;
-  domain: string;
-  description: string;
+  bin: string;
+  city: string;
   country: string;
-  size: string;
+  type: string;
   price: number;
 }
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: "1",
-      name: "Customer Analytics DB",
-      domain: "analytics.dnvdb.com",
-      description: "Complete customer behavior analytics database with 10M+ records",
-      country: "United States",
-      size: "2.5 GB",
-      price: 2500
-    },
-    {
-      id: "2", 
-      name: "E-commerce Transaction DB",
-      domain: "ecommerce.dnvdb.com",
-      description: "Comprehensive e-commerce transaction database with purchase patterns",
-      country: "Germany",
-      size: "1.8 GB",
-      price: 1800
-    },
-    {
-      id: "3",
-      name: "Medical Research DB",
-      domain: "medical.dnvdb.com",
-      description: "Anonymized medical research database for healthcare analytics",
-      country: "Canada",
-      size: "4.2 GB",
-      price: 4500
-    }
-  ]);
-
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"country" | "price" | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const btcWallet = "1MuCbBteMFrQpcXBNCftPRAwJ954LqZWjy";
+
+  // Load products from Supabase on component mount
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  // Filter and sort products
+  useEffect(() => {
+    let filtered = products.filter(product =>
+      product.bin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.city.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        if (sortBy === "price") {
+          return sortOrder === "asc" ? a.price - b.price : b.price - a.price;
+        } else {
+          const aVal = a[sortBy] as string;
+          const bVal = b[sortBy] as string;
+          return sortOrder === "asc" 
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+      });
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, sortBy, sortOrder]);
+
+  const loadProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (error) throw error;
+      
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products from database",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveProductsToDatabase = async (newProducts: Product[]) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert(newProducts.map(p => ({
+          bin: p.bin,
+          city: p.city,
+          country: p.country,
+          type: p.type,
+          price: p.price
+        })));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: `Saved ${newProducts.length} products to database permanently`,
+      });
+    } catch (error) {
+      console.error('Error saving products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save products to database",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (!isAuthenticated) {
     return <InvitationGate onValidCode={() => setIsAuthenticated(true)} />;
@@ -69,7 +125,7 @@ const Index = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = e.target?.result;
         let workbook;
@@ -89,23 +145,22 @@ const Index = () => {
         const newProducts = jsonData.map((row, index) => {
           console.log("Processing row:", row);
           return {
-            id: String(products.length + index + 1),
-            name: row.Name || row.name || "Unnamed Product",
-            domain: row.Domain || row.domain || "example.dnvdb.com",
-            description: row.Description || row.description || "No description available",
+            id: String(Date.now() + index),
+            bin: row.BIN || row.bin || row.Name || row.name || "Unknown BIN",
+            city: row.City || row.city || row.Domain || row.domain || "Unknown City",
             country: row.Country || row.country || "Unknown",
-            size: row.Size || row.size || "N/A",
+            type: row.Type || row.type || row.Description || row.description || "Unknown Type",
             price: parseFloat(row.Price || row.price) || 0
           };
         });
         
         console.log("New products to add:", newProducts);
         
-        setProducts(prev => [...prev, ...newProducts]);
-        toast({
-          title: "Success!",
-          description: `Added ${newProducts.length} products to inventory`,
-        });
+        // Save to database permanently
+        await saveProductsToDatabase(newProducts);
+        
+        // Reload products from database
+        await loadProducts();
         
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -130,11 +185,10 @@ const Index = () => {
   const downloadSampleFile = () => {
     const sampleData = [
       {
-        Name: "Sample Database",
-        Domain: "sample.dnvdb.com",
-        Description: "This is a sample database description",
+        BIN: "424242",
+        City: "New York",
         Country: "United States",
-        Size: "1.2 GB",
+        Type: "Visa Credit",
         Price: 1000
       }
     ];
@@ -143,6 +197,15 @@ const Index = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products");
     XLSX.writeFile(wb, "DNV_Database_Template.xlsx");
+  };
+
+  const handleSort = (column: "country" | "price") => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
   };
 
   const handlePurchase = (product: Product) => {
@@ -154,7 +217,7 @@ const Index = () => {
     if (selectedProduct) {
       toast({
         title: "Purchase Initiated!",
-        description: `Please send payment to complete your purchase of ${selectedProduct.name}`,
+        description: `Please send payment to complete your purchase of ${selectedProduct.bin} - ${selectedProduct.type}`,
       });
       
       setShowPayment(false);
@@ -162,12 +225,28 @@ const Index = () => {
     }
   };
 
-  const removeProduct = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-    toast({
-      title: "Product Removed",
-      description: "Product has been removed from inventory",
-    });
+  const removeProduct = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadProducts();
+      toast({
+        title: "Product Removed",
+        description: "Product has been removed from database permanently",
+      });
+    } catch (error) {
+      console.error('Error removing product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove product from database",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -236,6 +315,21 @@ const Index = () => {
           </CardContent>
         </Card>
 
+        {/* Search Bar */}
+        <Card className="border-border bg-white shadow-elegant">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search products by BIN, country, type, or city..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Enhanced Products Table */}
         <Card className="border-border bg-white shadow-elegant">
           <CardHeader className="bg-gradient-to-r from-dnv-dark-blue to-dnv-charcoal text-white rounded-t-lg">
@@ -243,7 +337,7 @@ const Index = () => {
               <div className="p-2 bg-white/20 rounded-lg">
                 <Database className="h-6 w-6" />
               </div>
-              <span>Available Databases</span>
+              <span>Available Databases ({filteredProducts.length})</span>
             </CardTitle>
             <CardDescription className="text-white/80">Browse our premium database collection</CardDescription>
           </CardHeader>
@@ -252,55 +346,81 @@ const Index = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border bg-gradient-to-r from-dnv-red/10 to-dnv-orange/10">
-                    <TableHead className="text-foreground font-bold">Name</TableHead>
-                    <TableHead className="text-foreground font-bold">Domain</TableHead>
-                    <TableHead className="text-foreground font-bold">Description</TableHead>
-                    <TableHead className="text-foreground font-bold">Country</TableHead>
-                    <TableHead className="text-foreground font-bold">Size</TableHead>
-                    <TableHead className="text-foreground font-bold">Price</TableHead>
-                    <TableHead className="text-foreground font-bold">BUY NOW BUTTON</TableHead>
+                    <TableHead className="text-foreground font-bold">BIN</TableHead>
+                    <TableHead className="text-foreground font-bold">City</TableHead>
+                    <TableHead className="text-foreground font-bold">Type</TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:bg-white/20 transition-colors"
+                      onClick={() => handleSort("country")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Country</span>
+                        <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:bg-white/20 transition-colors"
+                      onClick={() => handleSort("price")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Price</span>
+                        <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-foreground font-bold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product, index) => (
-                    <TableRow 
-                      key={product.id} 
-                      className={`border-border hover:bg-gradient-to-r hover:from-dnv-orange/5 hover:to-dnv-red/5 transition-all ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-dnv-dark-blue/5'
-                      }`}
-                    >
-                      <TableCell className="font-medium text-foreground">{product.name}</TableCell>
-                      <TableCell className="font-mono text-dnv-dark-blue font-semibold">{product.domain}</TableCell>
-                      <TableCell className="text-muted-foreground max-w-xs">
-                        {product.description}
-                      </TableCell>
-                      <TableCell className="text-foreground">{product.country}</TableCell>
-                      <TableCell className="text-foreground">{product.size}</TableCell>
-                      <TableCell className="font-mono text-dnv-red font-bold text-lg">
-                        ${product.price.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handlePurchase(product)}
-                            className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Buy Now
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => removeProduct(product.id)}
-                            className="border-dnv-red text-dnv-red hover:bg-dnv-red/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Loading products...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredProducts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {searchTerm ? "No products found matching your search." : "No products available. Upload some data to get started."}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredProducts.map((product, index) => (
+                      <TableRow 
+                        key={product.id} 
+                        className={`border-border hover:bg-gradient-to-r hover:from-dnv-orange/5 hover:to-dnv-red/5 transition-all ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-dnv-dark-blue/5'
+                        }`}
+                      >
+                        <TableCell className="font-mono text-dnv-dark-blue font-semibold">{product.bin}</TableCell>
+                        <TableCell className="text-foreground">{product.city}</TableCell>
+                        <TableCell className="text-foreground">{product.type}</TableCell>
+                        <TableCell className="text-foreground">{product.country}</TableCell>
+                        <TableCell className="font-mono text-dnv-red font-bold text-lg">
+                          ${product.price.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handlePurchase(product)}
+                              className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Buy Now
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => removeProduct(product.id)}
+                              className="border-dnv-red text-dnv-red hover:bg-dnv-red/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -318,7 +438,7 @@ const Index = () => {
                   </div>
                   <span>Bitcoin Payment</span>
                 </CardTitle>
-                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.name}</CardDescription>
+                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.bin} - {selectedProduct.type}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
                 <div className="text-center p-4 bg-gradient-warm rounded-lg">
