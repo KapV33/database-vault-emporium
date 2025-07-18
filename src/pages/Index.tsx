@@ -14,10 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
-  bin: string;
-  city: string;
+  Domain: string;
+  Description: string;
   country: string;
-  type: string;
+  Type: string;
   price: number;
 }
 
@@ -44,10 +44,10 @@ const Index = () => {
   // Filter and sort products
   useEffect(() => {
     let filtered = products.filter(product =>
-      product.bin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.Domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.city.toLowerCase().includes(searchTerm.toLowerCase())
+      product.Type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.Description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (sortBy) {
@@ -93,10 +93,10 @@ const Index = () => {
       const { error } = await supabase
         .from('products')
         .insert(newProducts.map(p => ({
-          bin: p.bin,
-          city: p.city,
+          Domain: p.Domain,
+          Description: p.Description,
           country: p.country,
-          type: p.type,
+          Type: p.Type,
           price: p.price
         })));
 
@@ -146,10 +146,10 @@ const Index = () => {
           console.log("Processing row:", row);
           return {
             id: String(Date.now() + index),
-            bin: row.BIN || row.bin || row.Name || row.name || "Unknown BIN",
-            city: row.City || row.city || row.Domain || row.domain || "Unknown City",
+            Domain: row.Domain || row.domain || row.BIN || row.bin || "Unknown Domain",
+            Description: row.Description || row.description || row.Type || row.type || "Unknown Description",
             country: row.Country || row.country || "Unknown",
-            type: row.Type || row.type || row.Description || row.description || "Unknown Type",
+            Type: row.Type || row.type || "Unknown Type",
             price: parseFloat(row.Price || row.price) || 0
           };
         });
@@ -185,10 +185,10 @@ const Index = () => {
   const downloadSampleFile = () => {
     const sampleData = [
       {
-        BIN: "424242",
-        City: "New York",
+        Domain: "example.com",
+        Description: "Premium financial data",
         Country: "United States",
-        Type: "Visa Credit",
+        Type: "Financial",
         Price: 1000
       }
     ];
@@ -217,7 +217,7 @@ const Index = () => {
     if (selectedProduct) {
       toast({
         title: "Purchase Initiated!",
-        description: `Please send payment to complete your purchase of ${selectedProduct.bin} - ${selectedProduct.type}`,
+        description: `Please send payment to complete your purchase of ${selectedProduct.Domain} - ${selectedProduct.Type}`,
       });
       
       setShowPayment(false);
@@ -276,44 +276,6 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Enhanced Admin Panel with solid colors */}
-        <Card className="border-dnv-dark-blue/30 bg-gradient-to-r from-dnv-dark-blue/5 to-dnv-red/5 backdrop-blur-sm shadow-elegant">
-          <CardHeader className="bg-gradient-accent rounded-t-lg">
-            <CardTitle className="flex items-center space-x-2 text-white">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Upload className="h-6 w-6" />
-              </div>
-              <span>Inventory Management</span>
-            </CardTitle>
-            <CardDescription className="text-white/80">Upload CSV or XLSX files to add products to your inventory</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 border border-dnv-orange/30">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="file-upload" className="text-foreground font-semibold">Upload Product File</Label>
-                  <Input
-                    id="file-upload"
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                    className="mt-2 border-dnv-dark-blue/30 bg-white shadow-sm"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button 
-                    onClick={downloadSampleFile}
-                    className="bg-gradient-warm text-white hover:opacity-90 shadow-warm border-0"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Search Bar */}
         <Card className="border-border bg-white shadow-elegant">
@@ -321,7 +283,7 @@ const Index = () => {
             <div className="flex items-center space-x-2">
               <Search className="h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search products by BIN, country, type, or city..."
+                placeholder="Search products by Company, Domain, Description, Country, or Type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1"
@@ -346,9 +308,9 @@ const Index = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border bg-gradient-to-r from-dnv-red/10 to-dnv-orange/10">
-                    <TableHead className="text-foreground font-bold">BIN</TableHead>
-                    <TableHead className="text-foreground font-bold">City</TableHead>
-                    <TableHead className="text-foreground font-bold">Type</TableHead>
+                    <TableHead className="text-foreground font-bold">Company</TableHead>
+                    <TableHead className="text-foreground font-bold">Domain</TableHead>
+                    <TableHead className="text-foreground font-bold">Description</TableHead>
                     <TableHead 
                       className="text-foreground font-bold cursor-pointer hover:bg-white/20 transition-colors"
                       onClick={() => handleSort("country")}
@@ -391,32 +353,22 @@ const Index = () => {
                           index % 2 === 0 ? 'bg-white' : 'bg-dnv-dark-blue/5'
                         }`}
                       >
-                        <TableCell className="font-mono text-dnv-dark-blue font-semibold">{product.bin}</TableCell>
-                        <TableCell className="text-foreground">{product.city}</TableCell>
-                        <TableCell className="text-foreground">{product.type}</TableCell>
+                        <TableCell className="font-mono text-dnv-dark-blue font-semibold">{product.Type}</TableCell>
+                        <TableCell className="text-foreground">{product.Domain}</TableCell>
+                        <TableCell className="text-foreground">{product.Description}</TableCell>
                         <TableCell className="text-foreground">{product.country}</TableCell>
                         <TableCell className="font-mono text-dnv-red font-bold text-lg">
                           ${product.price.toLocaleString()}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handlePurchase(product)}
-                              className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Buy Now
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeProduct(product.id)}
-                              className="border-dnv-red text-dnv-red hover:bg-dnv-red/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handlePurchase(product)}
+                            className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            BUY NOW
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -438,7 +390,7 @@ const Index = () => {
                   </div>
                   <span>Bitcoin Payment</span>
                 </CardTitle>
-                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.bin} - {selectedProduct.type}</CardDescription>
+                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.Domain} - {selectedProduct.Type}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
                 <div className="text-center p-4 bg-gradient-warm rounded-lg">

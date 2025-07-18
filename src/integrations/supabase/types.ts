@@ -147,33 +147,33 @@ export type Database = {
       }
       products: {
         Row: {
-          bin: string
-          city: string
           country: string
           created_at: string
+          Description: string
+          Domain: string
           id: string
           price: number
-          type: string
+          Type: string
           updated_at: string
         }
         Insert: {
-          bin: string
-          city: string
           country: string
           created_at?: string
+          Description: string
+          Domain: string
           id?: string
           price: number
-          type: string
+          Type: string
           updated_at?: string
         }
         Update: {
-          bin?: string
-          city?: string
           country?: string
           created_at?: string
+          Description?: string
+          Domain?: string
           id?: string
           price?: number
-          type?: string
+          Type?: string
           updated_at?: string
         }
         Relationships: []
