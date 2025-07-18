@@ -172,20 +172,23 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-6">
+      {/* Enhanced Header with gradient */}
+      <header className="border-b border-border bg-gradient-hero relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-accent opacity-20"></div>
+        <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Database className="h-8 w-8 text-dnv-orange" />
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl shadow-glow">
+                <Database className="h-10 w-10 text-white" />
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">DNV Databases</h1>
-                <p className="text-muted-foreground">Premium Database Solutions</p>
+                <h1 className="text-4xl font-bold text-white mb-2">DNV Databases</h1>
+                <p className="text-white/80 text-lg">Premium Database Solutions</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-dnv-orange/20 text-dnv-orange border-dnv-orange/30">
-                <Bitcoin className="h-4 w-4 mr-1" />
+              <Badge className="bg-gradient-warm text-white border-0 px-4 py-2 shadow-warm">
+                <Bitcoin className="h-5 w-5 mr-2" />
                 BTC Accepted
               </Badge>
             </div>
@@ -194,73 +197,86 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Admin Panel */}
-        <Card className="border-dnv-dark-blue/30 bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-foreground">
-              <Upload className="h-5 w-5 text-dnv-orange" />
+        {/* Enhanced Admin Panel with solid colors */}
+        <Card className="border-dnv-dark-blue/30 bg-gradient-to-r from-dnv-dark-blue/5 to-dnv-red/5 backdrop-blur-sm shadow-elegant">
+          <CardHeader className="bg-gradient-accent rounded-t-lg">
+            <CardTitle className="flex items-center space-x-2 text-white">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Upload className="h-6 w-6" />
+              </div>
               <span>Inventory Management</span>
             </CardTitle>
-            <CardDescription>Upload CSV or XLSX files to add products to your inventory</CardDescription>
+            <CardDescription className="text-white/80">Upload CSV or XLSX files to add products to your inventory</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Label htmlFor="file-upload" className="text-foreground">Upload Product File</Label>
-                <Input
-                  id="file-upload"
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleFileUpload}
-                  className="mt-1 border-border bg-input"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={downloadSampleFile}
-                  variant="outline"
-                  className="border-dnv-yellow text-dnv-yellow hover:bg-dnv-yellow/10"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Template
-                </Button>
+          <CardContent className="pt-6">
+            <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 border border-dnv-orange/30">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="file-upload" className="text-foreground font-semibold">Upload Product File</Label>
+                  <Input
+                    id="file-upload"
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileUpload}
+                    className="mt-2 border-dnv-dark-blue/30 bg-white shadow-sm"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={downloadSampleFile}
+                    className="bg-gradient-warm text-white hover:opacity-90 shadow-warm border-0"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Products Table */}
-        <Card className="border-border bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-foreground">Available Databases</CardTitle>
-            <CardDescription>Browse our premium database collection</CardDescription>
+        {/* Enhanced Products Table */}
+        <Card className="border-border bg-white shadow-elegant">
+          <CardHeader className="bg-gradient-to-r from-dnv-dark-blue to-dnv-charcoal text-white rounded-t-lg">
+            <CardTitle className="flex items-center space-x-2">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Database className="h-6 w-6" />
+              </div>
+              <span>Available Databases</span>
+            </CardTitle>
+            <CardDescription className="text-white/80">Browse our premium database collection</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border">
-                    <TableHead className="text-foreground">Name</TableHead>
-                    <TableHead className="text-foreground">Domain</TableHead>
-                    <TableHead className="text-foreground">Description</TableHead>
-                    <TableHead className="text-foreground">Country</TableHead>
-                    <TableHead className="text-foreground">Size</TableHead>
-                    <TableHead className="text-foreground">Price</TableHead>
-                    <TableHead className="text-foreground">BUY NOW BUTTON</TableHead>
+                  <TableRow className="border-border bg-gradient-to-r from-dnv-red/10 to-dnv-orange/10">
+                    <TableHead className="text-foreground font-bold">Name</TableHead>
+                    <TableHead className="text-foreground font-bold">Domain</TableHead>
+                    <TableHead className="text-foreground font-bold">Description</TableHead>
+                    <TableHead className="text-foreground font-bold">Country</TableHead>
+                    <TableHead className="text-foreground font-bold">Size</TableHead>
+                    <TableHead className="text-foreground font-bold">Price</TableHead>
+                    <TableHead className="text-foreground font-bold">BUY NOW BUTTON</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id} className="border-border">
+                  {products.map((product, index) => (
+                    <TableRow 
+                      key={product.id} 
+                      className={`border-border hover:bg-gradient-to-r hover:from-dnv-orange/5 hover:to-dnv-red/5 transition-all ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-dnv-dark-blue/5'
+                      }`}
+                    >
                       <TableCell className="font-medium text-foreground">{product.name}</TableCell>
-                      <TableCell className="font-mono text-dnv-dark-blue">{product.domain}</TableCell>
+                      <TableCell className="font-mono text-dnv-dark-blue font-semibold">{product.domain}</TableCell>
                       <TableCell className="text-muted-foreground max-w-xs">
                         {product.description}
                       </TableCell>
                       <TableCell className="text-foreground">{product.country}</TableCell>
                       <TableCell className="text-foreground">{product.size}</TableCell>
-                      <TableCell className="font-mono text-dnv-orange font-semibold">
+                      <TableCell className="font-mono text-dnv-red font-bold text-lg">
                         ${product.price.toLocaleString()}
                       </TableCell>
                       <TableCell>
@@ -268,7 +284,7 @@ const Index = () => {
                           <Button
                             size="sm"
                             onClick={() => handlePurchase(product)}
-                            className="bg-dnv-orange hover:bg-dnv-orange/80 text-white"
+                            className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
                           >
                             <Plus className="h-4 w-4 mr-1" />
                             Buy Now
@@ -291,30 +307,32 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Payment Modal */}
+        {/* Enhanced Payment Modal */}
         {showPayment && selectedProduct && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md border-dnv-orange/30 bg-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-foreground">
-                  <Bitcoin className="h-5 w-5 text-dnv-orange" />
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <Card className="w-full max-w-md border-dnv-orange/30 bg-white shadow-2xl">
+              <CardHeader className="bg-gradient-accent text-white rounded-t-lg">
+                <CardTitle className="flex items-center space-x-2">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <Bitcoin className="h-6 w-6" />
+                  </div>
                   <span>Bitcoin Payment</span>
                 </CardTitle>
-                <CardDescription>Complete your purchase of {selectedProduct.name}</CardDescription>
+                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.name}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-dnv-orange">${selectedProduct.price.toLocaleString()}</p>
-                  <p className="text-muted-foreground">Send Bitcoin equivalent to:</p>
+              <CardContent className="space-y-6 pt-6">
+                <div className="text-center p-4 bg-gradient-warm rounded-lg">
+                  <p className="text-3xl font-bold text-white mb-2">${selectedProduct.price.toLocaleString()}</p>
+                  <p className="text-white/80">Send Bitcoin equivalent to:</p>
                 </div>
                 
-                <div className="bg-muted p-4 rounded-lg">
-                  <p className="font-mono text-sm break-all text-center text-foreground">{btcWallet}</p>
+                <div className="bg-dnv-charcoal p-4 rounded-lg border-2 border-dnv-orange/30">
+                  <p className="font-mono text-sm break-all text-center text-white">{btcWallet}</p>
                 </div>
                 
-                <div className="bg-dnv-yellow/10 border border-dnv-yellow/30 p-3 rounded-lg">
+                <div className="bg-gradient-to-r from-dnv-yellow/20 to-dnv-orange/20 border-2 border-dnv-orange/50 p-4 rounded-lg">
                   <p className="text-sm text-foreground">
-                    <strong>Important:</strong> Send the Bitcoin equivalent of ${selectedProduct.price.toLocaleString()} to the address above. 
+                    <strong className="text-dnv-red">Important:</strong> Send the Bitcoin equivalent of ${selectedProduct.price.toLocaleString()} to the address above. 
                     Your database access will be provided after 1 confirmation.
                   </p>
                 </div>
@@ -322,14 +340,14 @@ const Index = () => {
                 <div className="flex space-x-2">
                   <Button 
                     onClick={completePurchase}
-                    className="flex-1 bg-dnv-orange hover:bg-dnv-orange/80 text-white"
+                    className="flex-1 bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
                   >
                     Payment Sent
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => setShowPayment(false)}
-                    className="border-border"
+                    className="border-dnv-dark-blue text-dnv-dark-blue hover:bg-dnv-dark-blue/10"
                   >
                     Cancel
                   </Button>
