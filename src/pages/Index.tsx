@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Database, Bitcoin, Download, Plus, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { Upload, Database, Bitcoin, Download, Plus, Trash2, Search, ArrowUpDown, ShoppingCart, CreditCard } from "lucide-react";
 import * as XLSX from "xlsx";
 import InvitationGate from "@/components/InvitationGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,11 +30,13 @@ const Index = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [cart, setCart] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const btcWallet = "1MuCbBteMFrQpcXBNCftPRAwJ954LqZWjy";
+  const btcWallet = "3ALPmjs4ASeVNFc7vfFc1L8MXBvttXoUtg";
+  const ethWallet = "0xB3Eb678Bb1FDF3cB7935eA52A1f482cD894348E6";
 
   // Load products from Supabase on component mount
   useEffect(() => {
@@ -208,18 +210,21 @@ const Index = () => {
     }
   };
 
-  const handlePurchase = (product: Product) => {
-    setSelectedProduct(product);
-    setShowPayment(true);
+  const addToCart = (product: Product) => {
+    setCart(prevCart => [...prevCart, product]);
+    toast({
+      title: "Added to Cart",
+      description: `${product.Domain} has been added to your cart.`,
+    });
   };
 
   const completePurchase = () => {
-    if (selectedProduct) {
+    if (cart.length > 0) {
       toast({
         title: "Purchase Initiated!",
-        description: `Please send payment to complete your purchase of ${selectedProduct.Domain} - ${selectedProduct.Type}`,
+        description: `Please send payment to complete your purchase. Cart will be cleared after confirmation.`,
       });
-      
+
       setShowPayment(false);
       setSelectedProduct(null);
     }
@@ -292,6 +297,55 @@ const Index = () => {
           </CardContent>
         </Card>
 
+        {/* Cart Display */}
+        {cart.length > 0 && (
+          <Card className="border-border bg-white shadow-elegant">
+            <CardHeader className="bg-gradient-to-r from-dnv-orange to-dnv-red text-white rounded-t-lg">
+              <CardTitle className="flex items-center space-x-2">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <ShoppingCart className="h-6 w-6" />
+                </div>
+                <span>Shopping Cart ({cart.length} items)</span>
+              </CardTitle>
+              <CardDescription className="text-white/80">
+                Total: ${cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                {cart.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="flex justify-between items-center p-3 bg-gradient-to-r from-dnv-orange/5 to-dnv-red/5 rounded-lg">
+                    <div>
+                      <p className="font-semibold text-dnv-dark-blue">{item.Domain}</p>
+                      <p className="text-sm text-muted-foreground">{item.Type} - {item.country}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-dnv-red">${item.price.toLocaleString()}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setCart(prevCart => prevCart.filter((_, i) => i !== index))}
+                        className="border-dnv-red text-dnv-red hover:bg-dnv-red/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  onClick={() => setShowPayment(true)}
+                  className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Checkout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Enhanced Products Table */}
         <Card className="border-border bg-white shadow-elegant">
           <CardHeader className="bg-gradient-to-r from-dnv-dark-blue to-dnv-charcoal text-white rounded-t-lg">
@@ -363,11 +417,11 @@ const Index = () => {
                         <TableCell>
                           <Button
                             size="sm"
-                            onClick={() => handlePurchase(product)}
+                            onClick={() => addToCart(product)}
                             className="bg-gradient-accent hover:opacity-90 text-white border-0 shadow-warm"
                           >
                             <Plus className="h-4 w-4 mr-1" />
-                            BUY NOW
+                            Add to Cart
                           </Button>
                         </TableCell>
                       </TableRow>
