@@ -32,11 +32,17 @@ const Index = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [cart, setCart] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<"BTC" | "ETH">("BTC");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [discount, setDiscount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const btcWallet = "3ALPmjs4ASeVNFc7vfFc1L8MXBvttXoUtg";
   const ethWallet = "0xB3Eb678Bb1FDF3cB7935eA52A1f482cD894348E6";
+  const validCoupon = "8YvT12CiTx8";
+  const couponDiscount = 850;
 
   // Load products from Supabase on component mount
   useEffect(() => {
@@ -218,6 +224,23 @@ const Index = () => {
     });
   };
 
+  const applyCoupon = () => {
+    if (couponCode.trim() === validCoupon) {
+      setCouponApplied(true);
+      setDiscount(couponDiscount);
+      toast({
+        title: "Coupon Applied!",
+        description: `You've saved $${couponDiscount}!`,
+      });
+    } else {
+      toast({
+        title: "Invalid Coupon",
+        description: "The coupon code you entered is not valid.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const completePurchase = () => {
     if (cart.length > 0) {
       toast({
@@ -227,6 +250,9 @@ const Index = () => {
 
       setShowPayment(false);
       setSelectedProduct(null);
+      setCouponCode("");
+      setCouponApplied(false);
+      setDiscount(0);
     }
   };
 
@@ -273,7 +299,7 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <Badge className="bg-gradient-warm text-white border-0 px-4 py-2 shadow-warm">
                 <Bitcoin className="h-5 w-5 mr-2" />
-                BTC Accepted
+                BTC & ETH Accepted
               </Badge>
             </div>
           </div>
@@ -308,7 +334,14 @@ const Index = () => {
                 <span>Shopping Cart ({cart.length} items)</span>
               </CardTitle>
               <CardDescription className="text-white/80">
-                Total: ${cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}
+                {couponApplied ? (
+                  <div>
+                    <div className="line-through opacity-75">Original: ${cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}</div>
+                    <div className="text-lg font-bold">Total: ${Math.max(0, cart.reduce((sum, item) => sum + item.price, 0) - discount).toLocaleString()} (Coupon: -${discount})</div>
+                  </div>
+                ) : (
+                  `Total: $${cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}`
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -434,7 +467,7 @@ const Index = () => {
         </Card>
 
         {/* Enhanced Payment Modal */}
-        {showPayment && selectedProduct && (
+        {showPayment && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <Card className="w-full max-w-md border-dnv-orange/30 bg-white shadow-2xl">
               <CardHeader className="bg-gradient-accent text-white rounded-t-lg">
@@ -442,23 +475,82 @@ const Index = () => {
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Bitcoin className="h-6 w-6" />
                   </div>
-                  <span>Bitcoin Payment</span>
+                  <span>Cryptocurrency Payment</span>
                 </CardTitle>
-                <CardDescription className="text-white/80">Complete your purchase of {selectedProduct.Domain} - {selectedProduct.Type}</CardDescription>
+                <CardDescription className="text-white/80">Complete your purchase of {cart.length} item(s)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
+                {/* Coupon Code Section */}
+                {!couponApplied && (
+                  <div className="space-y-2">
+                    <Label htmlFor="coupon">Have a coupon code?</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="coupon"
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={applyCoupon}
+                        variant="outline"
+                        className="border-dnv-orange text-dnv-orange hover:bg-dnv-orange/10"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {couponApplied && (
+                  <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
+                    <p className="text-sm text-green-700 font-semibold">✓ Coupon Applied: ${discount} discount!</p>
+                  </div>
+                )}
+
+                {/* Price Display */}
                 <div className="text-center p-4 bg-gradient-warm rounded-lg">
-                  <p className="text-3xl font-bold text-white mb-2">${selectedProduct.price.toLocaleString()}</p>
-                  <p className="text-white/80">Send Bitcoin equivalent to:</p>
+                  {couponApplied && (
+                    <p className="text-lg text-white/80 line-through mb-1">
+                      ${cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-3xl font-bold text-white mb-2">
+                    ${Math.max(0, cart.reduce((sum, item) => sum + item.price, 0) - discount).toLocaleString()}
+                  </p>
+                  <p className="text-white/80">Send {paymentMethod} equivalent to:</p>
+                </div>
+
+                {/* Payment Method Selection */}
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setPaymentMethod("BTC")}
+                    variant={paymentMethod === "BTC" ? "default" : "outline"}
+                    className={paymentMethod === "BTC" ? "flex-1 bg-gradient-accent text-white" : "flex-1"}
+                  >
+                    <Bitcoin className="h-4 w-4 mr-2" />
+                    Bitcoin
+                  </Button>
+                  <Button
+                    onClick={() => setPaymentMethod("ETH")}
+                    variant={paymentMethod === "ETH" ? "default" : "outline"}
+                    className={paymentMethod === "ETH" ? "flex-1 bg-gradient-accent text-white" : "flex-1"}
+                  >
+                    Ethereum
+                  </Button>
                 </div>
                 
+                {/* Wallet Address Display */}
                 <div className="bg-dnv-charcoal p-4 rounded-lg border-2 border-dnv-orange/30">
-                  <p className="font-mono text-sm break-all text-center text-white">{btcWallet}</p>
+                  <p className="font-mono text-sm break-all text-center text-white">
+                    {paymentMethod === "BTC" ? btcWallet : ethWallet}
+                  </p>
                 </div>
                 
                 <div className="bg-gradient-to-r from-dnv-yellow/20 to-dnv-orange/20 border-2 border-dnv-orange/50 p-4 rounded-lg">
                   <p className="text-sm text-foreground">
-                    <strong className="text-dnv-red">Important:</strong> Send the Bitcoin equivalent of ${selectedProduct.price.toLocaleString()} to the address above. 
+                    <strong className="text-dnv-red">Important:</strong> Send the {paymentMethod} equivalent of ${Math.max(0, cart.reduce((sum, item) => sum + item.price, 0) - discount).toLocaleString()} to the address above. 
                     Your database access will be provided after 1 confirmation.
                   </p>
                 </div>
@@ -472,7 +564,12 @@ const Index = () => {
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => setShowPayment(false)}
+                    onClick={() => {
+                      setShowPayment(false);
+                      setCouponCode("");
+                      setCouponApplied(false);
+                      setDiscount(0);
+                    }}
                     className="border-dnv-dark-blue text-dnv-dark-blue hover:bg-dnv-dark-blue/10"
                   >
                     Cancel
